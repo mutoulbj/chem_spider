@@ -4,4 +4,4 @@ from aladdin_product import get_product
 
 
 if __name__ == '__main__':
-    get_product({'keyword': 'smkx'})
+    get_product('smkx', {'keyword': 'smkx'})
