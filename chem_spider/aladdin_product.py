@@ -7,14 +7,19 @@ import copy
 import requests
 from pyquery import PyQuery as pq
 from mongodb import db
+from requests.exceptions import ConnectionError
 
 
 def get_product(query):
     detail_urls = db.aladdin_detail_page.find(query)
     for item in detail_urls:
         for url in item['urls']:
-            res = requests.get(url)
-            if res.status_code == 200:
+            try:
+                res = requests.get(url)
+            except ConnectionError:
+                res = False
+
+            if res and res.status_code == 200:
                 p = pq(res.content)
 
                 d = {
@@ -60,7 +65,7 @@ def get_product(query):
                         d_copy['stock'] = tr('td').eq(4).text()  # 库存
                         d_copy['unit'] = tr('td').eq(6).text()  # 计量单位
                         save_product(keyword=item['keyword'], d=d_copy)
-            time.sleep(random.randint(0, 5))
+            time.sleep(random.randint(0, 8))
 
 
 def save_product(keyword, d):
