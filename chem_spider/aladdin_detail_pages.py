@@ -8,7 +8,7 @@ from mongodb import db
 
 
 def get_aladdin_detail_url():
-    base_urls = db.aladdin_base_url.find()
+    base_urls = db.aladdin_base_url.find({'keyword': 'gdhx'})
     for item in base_urls:
         for url in item['urls']:
             res = requests.get(url)
@@ -18,9 +18,10 @@ def get_aladdin_detail_url():
 
                 for i in tbody:
                     tr = pq(i)
-                    href = 'http://www.aladdin-e.com/' + tr('td:first a').attr('href')
+                    href = 'http://www.aladdin-e.com' + tr('td:first a').attr('href')
                     db.aladdin_detail_page.update({'keyword': item['keyword']}, {'$addToSet': {'urls':  href}}, upsert=True)
-            time.sleep(random.randint(0,4))
+            print '*'
+            time.sleep(random.randint(0, 5))
 
 
 if __name__ == '__main__':

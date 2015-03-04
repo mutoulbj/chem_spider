@@ -9,19 +9,19 @@ from pyquery import PyQuery as pq
 from mongodb import db
 
 
-
-def get_product():
-    detail_urls = db.aladdin_detail_page.find()
+def get_product(query):
+    detail_urls = db.aladdin_detail_page.find(query)
     for item in detail_urls:
         for url in item['urls']:
             res = requests.get(url)
             if res.status_code == 200:
                 p = pq(res.content)
 
-                d = {}
-                d['number'] = p('div.pl10.fl.w120.pt14 h1.itmdet-topbar-itmnum').text()
-                d['name'] = p('div.pt14 h1.f18').text()
-                d['en_name'] = p('div.itmdet-baseCnt-title span.fb').text().replace('Product Name:', '').strip()
+                d = {
+                    'number': p('div.pl10.fl.w120.pt14 h1.itmdet-topbar-itmnum').text(),
+                    'name': p('div.pt14 h1.f18').text(),
+                    'en_name': p('div.itmdet-baseCnt-title span.fb').text().replace('Product Name:', '').strip()
+                }
 
                 tbody = pq(p('div.itmdet-baseCnt.fl table.productOverViewInfo tbody tr'))
                 for t in tbody:
@@ -60,8 +60,7 @@ def get_product():
                         d_copy['stock'] = tr('td').eq(4).text()  # 库存
                         d_copy['unit'] = tr('td').eq(6).text()  # 计量单位
                         save_product(keyword=item['keyword'], d=d_copy)
-
-            time.sleep(random.randint(0,4))
+            time.sleep(random.randint(0, 5))
 
 
 def save_product(keyword, d):
@@ -73,6 +72,3 @@ def save_product(keyword, d):
         db.aladdin_product_gdhx.update({'number': d['number']}, {'$set': d}, upsert=True)
     elif keyword == 'clkx':
         db.aladdin_product_clkx.update({'number': d['number']}, {'$set': d}, upsert=True)
-
-if __name__ == '__main__':
-    get_product()
