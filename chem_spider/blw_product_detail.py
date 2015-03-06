@@ -20,7 +20,6 @@ def get_product_detail():
             res = requests.get(url)
             if res.status_code == 200:
                 res = json.loads(res.content[1:-1])
-                print res
                 for item in res:
                     d = copy.deepcopy(pro)
                     save_product_detail(d, item)
