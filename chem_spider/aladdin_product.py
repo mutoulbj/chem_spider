@@ -82,14 +82,10 @@ def get_product(key, query):
 
 def save_product(keyword, d):
     if keyword == 'fxkx':
-        # db.aladdin_product_fxkx.update({'number': d['number']}, {'$set': d}, upsert=True)
         db.aladdin_product_fxkx.insert(d)
     elif keyword == 'smkx':
-        # db.aladdin_product_smkx.update({'number': d['number']}, {'$set': d}, upsert=True)
         db.aladdin_product_smkx.insert(d)
     elif keyword == 'gdhx':
-        # db.aladdin_product_gdhx.update({'number': d['number']}, {'$set': d}, upsert=True)
         db.aladdin_product_gdhx.insert(d)
     elif keyword == 'clkx':
-        # db.aladdin_product_clkx.update({'number': d['number']}, {'$set': d}, upsert=True)
         db.aladdin_product_clkx.insert(d)
