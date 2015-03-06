@@ -68,6 +68,7 @@ def export_to_xlsx():
             worksheet.write(row, col+11, item.get('sale_price', ''))
             worksheet.write(row, col+12, item.get('discounted_price', ''))
             worksheet.write(row, col+13, item.get('stock', ''))
+            row += 1
 
         # close the connection because has set timeout to False
         conn.close()
