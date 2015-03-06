@@ -71,6 +71,7 @@ def export_to_xlsx():
 
         # close the connection because has set timeout to False
         conn.close()
+    workbook.close()
 
 
 if __name__ == '__main__':
