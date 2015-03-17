@@ -4,9 +4,10 @@ import xlsxwriter
 from mongodb import db, conn
 
 
-def export_to_xlsx():
+def export_to_xlsx(skip_num, limit_num):
     # create a workbook
-    workbook = xlsxwriter.Workbook(u'百灵威数据采集.xlsx')  # create a worksheet and export data
+    book_name = u'百灵威数据采集_' + str(skip_num//limit_num+1) + '.xlsx'
+    workbook = xlsxwriter.Workbook(book_name)  # create a worksheet and export data
     worksheet = workbook.add_worksheet(u'百灵威')
     worksheet.write(0, 0, u'英文名称')
     worksheet.write(0, 1, u'中文名称')
@@ -22,7 +23,8 @@ def export_to_xlsx():
     row = 1
     col = 0
 
-    products = db.blw_product_detail.find(timeout=False)  # remember to close the connection
+    # remember to close the connection
+    products = db.blw_product_detail.find(timeout=False).skip(skip_num).limit(limit_num)
     for item in products:
         worksheet.write(row, col, item.get('en_name', ''))
         worksheet.write(row, col + 1, item.get('name', ''))
@@ -42,4 +44,9 @@ def export_to_xlsx():
 
 
 if __name__ == '__main__':
-    export_to_xlsx()
+    # amount = 238979
+    skip_num = 0
+    limit_num = 5000
+    while skip_num <= 240000:
+        export_to_xlsx(skip_num=skip_num, limit_num=limit_num)
+        skip_num += 5000
