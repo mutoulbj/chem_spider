@@ -71,11 +71,13 @@ def get_chromatography_urls():
 
                         for item in url_list:
                             # 保存进mongodb
-                            # chromatography_db_collection[i].insert({'url': item})
-                            chromatography_db_collection[i].update({'url': item}, {'url': item}, upsert=True)
+                            if i > 3:
+                                chromatography_db_collection[i].insert({'url': item})
+                            else:
+                                chromatography_db_collection[i].update({'url': item}, {'url': item}, upsert=True)
                     else:
                         # 是具体产品页面，保存url进具体产品url表
-                        chromatography_extract_product_url(pq(res.content))
+                        chromatography_extract_product_url(i, pq(res.content))
             conn.close()
         else:
             conn.close()
@@ -97,7 +99,7 @@ def chromatography_extract_li(p):
     return url_list
 
 
-def chromatography_extract_product_url(p):
+def chromatography_extract_product_url(i, p):
     """
     获取产品列表页的产品url
     :param p: pyquery对象
@@ -109,8 +111,10 @@ def chromatography_extract_product_url(p):
         for tr in trs:
             href = pq(tr)('td:first a').attr('href')
             if href:
-                # db.sigma_chromatography_product_urls.insert({'url': base_url+href})
-                db.sigma_chromatography_product_urls.update({'url': base_url+href}, {'url': base_url+href}, upsert=True)
+                if i > 3:
+                    db.sigma_chromatography_product_urls.insert({'url': base_url+href})
+                else:
+                    db.sigma_chromatography_product_urls.update({'url': base_url+href}, {'url': base_url+href}, upsert=True)
 
 
 
