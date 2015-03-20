@@ -32,7 +32,6 @@ chromatography_db_collection = {
 def get_chromatography_base_urls():
     """
     分析/色谱, 基本url
-    :param url: 入口url
     :return:
     """
     url = 'http://www.sigmaaldrich.com/china-mainland/zh/analytical-chromatography/analytical-chromatography-catalog.html'
@@ -81,26 +80,6 @@ def get_chromatography_urls():
             break
 
 
-# ##########################################
-
-# def get_chromatography_detail_url():
-#     """
-#     获取到每个产品详情页的url
-#     :return:
-#     """
-#     urls = db.sigma_chromatography_urls.find(timeout=False)
-#
-#     for url in urls:
-#         print '******', '\n'
-#         res = get_res(url['url'])
-#         if res:
-#             p = pq(res.content)
-#             url_list = chromatography_extract_li(p)
-#             chromatography_extract_url(url_list)
-#     conn.close()
-
-
-
 def chromatography_extract_li(p):
     """
     提取出非具体产品列表页的产品分类url
@@ -114,24 +93,6 @@ def chromatography_extract_li(p):
         for li in lis:
             url_list.append(base_url + pq(li)('a').attr('href'))
     return url_list
-
-
-# def chromatography_extract_url(urls):
-#     """
-#     递归直到获取到最终产品列表页面
-#     :param urls:
-#     :return:
-#     """
-#     for url in urls:
-#         res = get_res(url)
-#         if res:
-#             if 'Product #' not in res.content:
-#                 p = pq(res.content)
-#                 url_list = chromatography_extract_li(p)
-#                 chromatography_extract_url(url_list)
-#             else:
-#                 chromatography_extract_product_url(pq(res.content))
-#                 continue
 
 
 def chromatography_extract_product_url(p):
@@ -179,13 +140,14 @@ def get_res(url):
     :return:
     """
     try:
+        requests.adapters.DEFAULT_RETRIES = 5
         res = requests.get(url)
         time.sleep(random.randint(0, 3))
         if res.status_code == 200:
             return res
         return None
     except ConnectionError, e:
-        log.debug(str(e))
+        log.debug(str(e) + ' error')
         return None
 
 
