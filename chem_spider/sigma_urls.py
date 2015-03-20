@@ -147,6 +147,7 @@ def get_res(url):
             return res
         return None
     except ConnectionError, e:
+        time.sleep(20)
         log.debug(str(e) + ' error')
         return None
 
