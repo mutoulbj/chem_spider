@@ -54,7 +54,7 @@ def get_chromatography_urls():
     """
 
     # for i in range(10):
-    for i in range(3, 10):
+    for i in range(4, 10):
         if i == 0:
             base_urls = db.sigma_chromatography_urls.find(timeout=False)
         else:
@@ -71,7 +71,7 @@ def get_chromatography_urls():
 
                         for item in url_list:
                             # 保存进mongodb
-                            if i > 3:
+                            if i > 4:
                                 chromatography_db_collection[i].insert({'url': item})
                             else:
                                 chromatography_db_collection[i].update({'url': item}, {'url': item}, upsert=True)
@@ -111,7 +111,7 @@ def chromatography_extract_product_url(i, p):
         for tr in trs:
             href = pq(tr)('td:first a').attr('href')
             if href:
-                if i > 3:
+                if i > 4:
                     db.sigma_chromatography_product_urls.insert({'url': base_url+href})
                 else:
                     db.sigma_chromatography_product_urls.update({'url': base_url+href}, {'url': base_url+href}, upsert=True)
