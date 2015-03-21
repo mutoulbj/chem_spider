@@ -66,7 +66,7 @@ def get_chromatography_urls():
                 res = get_res(url['url'])
                 if res:
                     if 'Product #' not in res.content:
-                        p = pq(res.text())
+                        p = pq(res.text)
                         url_list = chromatography_extract_li(p)
 
                         for item in url_list:
