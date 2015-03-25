@@ -264,7 +264,7 @@ def get_res(url):
         if res.status_code == 200:
             return res
         return None
-    except ConnectionError, e:
+    except Exception, e:
         time.sleep(20)
         log.debug(str(e) + ' error')
         return None
