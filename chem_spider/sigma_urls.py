@@ -67,7 +67,7 @@ def get_chromatography_urls():
                 if res:
                     if 'Product #' not in res.content:
                         p = pq(res.text)
-                        url_list = chromatography_extract_li(p)
+                        url_list = extract_li(p)
 
                         for item in url_list:
                             # 保存进mongodb
@@ -84,7 +84,7 @@ def get_chromatography_urls():
             break
 
 
-def chromatography_extract_li(p):
+def extract_li(p):
     """
     提取出非具体产品列表页的产品分类url
     :param p: pyquery 对象
@@ -117,17 +117,128 @@ def chromatography_extract_product_url(i, p):
                     db.sigma_chromatography_product_urls.update({'url': base_url+href}, {'url': base_url+href}, upsert=True)
 
 
+def get_product_detail():
+    """
+    抓取产品详情
+    :return: None
+    """
+    # urls = db.sigma_chromatography_product_urls.find(timeout=False)
+    urls = [{'url': 'http://www.sigmaaldrich.com/catalog/product/aldrich/452238?lang=zh&region=CN'}]
+    print 2323232
+    for url in urls:
+        res = get_res(url['url'])
+        print 124
+        if res:
+            p = pq(res.text)
+            print p
+            pro_list = get_pro_list(p) # 获取产品具体规格
 
 
+def get_pro_list(p):
+    url = 'http://www.sigmaaldrich.com/catalog/PricingAvailability.do?productNumber=452238&brandKey=ALDRICH&divId=pricingContainerMessage'
 
-def get_chemistry_urls():
+    container_message = p('div#pricingContainer div#pricingContainerMessage div.product-discontinued li.longMessageContainer').text()
+    pro_trs = list(p('div#pricingContainer div#pricingContainerMessage table').find('tr'))[1:]
+    print container_message
+    print pro_trs
+
+
+chemistry_db_collection = {
+    0: db.sigma_chemistry_urls_0,
+    1: db.sigma_chemistry_urls_1,
+    2: db.sigma_chemistry_urls_2,
+    3: db.sigma_chemistry_urls_3,
+    4: db.sigma_chemistry_urls_4,
+    5: db.sigma_chemistry_urls_5,
+    6: db.sigma_chemistry_urls_6,
+    7: db.sigma_chemistry_urls_7,
+    8: db.sigma_chemistry_urls_8,
+    9: db.sigma_chemistry_urls_9
+}
+
+
+def get_chemistry_base_urls():
     """
     化学
     一级一级获取url,直到最终的产品页面,获取到每个产品详情页的url
     :return:
     """
     url = 'http://www.sigmaaldrich.com/china-mainland/chemistry-product.html'
-    pass
+    res = get_res(url)
+    if res:
+        p = pq(res.content)
+        # print res.content
+        section = p('#duoamidcol div.sides div.parsys.mainpar div.parbase.section').eq(1)
+        trs = pq(section)('table').find('tr')
+        for t in trs:
+            td_0 = pq(t)('td').eq(0)
+            td_1 = pq(t)('td').eq(2)
+            td_2 = pq(t)('td').eq(4)
+            for td in [td_0, td_1, td_2]:
+                lis = pq(td)('ul').find('li')
+                for li in lis:
+                    href = pq(li)('a').attr('href')
+                    if href:
+                        db.sigma_chemistry_urls.insert({'url': base_url + href})
+                more = pq(td)('div.one a').attr('href')
+                if more:
+                    db.sigma_chemistry_urls.insert({'url': base_url + more})
+
+
+def get_chemistry_urls():
+    """
+    根据基本的url,一步步进入,若不是最终的产品页面,则保存进对应级别的url,否则保存具体产品的url
+    :return:
+    """
+
+    for i in range(10):
+        if i == 0:
+            base_urls = db.sigma_chemistry_urls.find(timeout=False)
+        else:
+            base_urls = chemistry_db_collection[i-1].find(timeout=False)
+
+        print base_urls.count(), '\n'
+        if base_urls:
+            for url in base_urls:
+                res = get_res(url['url'])
+                if res:
+                    if 'Product #' not in res.content:
+                        p = pq(res.text)
+                        url_list = extract_li(p)
+
+                        for item in url_list:
+                            # 保存进mongodb
+                            chemistry_db_collection[i].insert({'url': item})
+                            # if i > 4:
+                            #     chemistry_db_collection[i].insert({'url': item})
+                            # else:
+                            #     chemistry_db_collection[i].update({'url': item}, {'url': item}, upsert=True)
+                    else:
+                        # 是具体产品页面，保存url进具体产品url表
+                        chemistry_extract_product_url(i, pq(res.content))
+            conn.close()
+        else:
+            conn.close()
+            break
+
+
+def chemistry_extract_product_url(i, p):
+    """
+    获取产品列表页的产品url
+    :param p: pyquery对象
+    :return:
+    """
+    tables = p('table.opcTable')
+    for t in tables:
+        trs = pq(t)('tbody').find('tr')
+        for tr in trs:
+            href = pq(tr)('td:first a').attr('href')
+            if href:
+                db.sigma_chemistry_product_urls.insert({'url': base_url+href})
+                # if i > 4:
+                #     db.sigma_chemistry_product_urls.insert({'url': base_url+href})
+                # else:
+                #     db.sigma_chemistry_product_urls.update({'url': base_url+href}, {'url': base_url+href}, upsert=True)
 
 
 def get_materials_urls():
