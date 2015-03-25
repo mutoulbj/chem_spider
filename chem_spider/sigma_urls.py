@@ -241,14 +241,70 @@ def chemistry_extract_product_url(i, p):
                 #     db.sigma_chemistry_product_urls.update({'url': base_url+href}, {'url': base_url+href}, upsert=True)
 
 
+materials_db_collection = {
+    0: db.sigma_materials_urls_0,
+    1: db.sigma_materials_urls_1,
+    2: db.sigma_materials_urls_2,
+    3: db.sigma_materials_urls_3,
+    4: db.sigma_materials_urls_4,
+    5: db.sigma_materials_urls_5,
+    6: db.sigma_materials_urls_6,
+    7: db.sigma_materials_urls_7,
+    8: db.sigma_materials_urls_8,
+    9: db.sigma_materials_urls_9
+}
+
 def get_materials_urls():
     """
-    材料科学
-    一级一级获取url,直到最终的产品页面,获取到每个产品详情页的url
+    根据基本的url,一步步进入,若不是最终的产品页面,则保存进对应级别的url,否则保存具体产品的url
     :return:
     """
-    url = 'http://www.sigmaaldrich.com/china-mainland/zh/materials-science/material-science-products.html?TablePage=9540636'
-    pass
+    for i in range(10):
+        if i == 0:
+            base_urls = [{
+                             'url': 'http://www.sigmaaldrich.com/china-mainland/zh/materials-science/material-science-products.html?TablePage=9540636'
+                         }]
+        else:
+            base_urls = materials_db_collection[i-1].find(timeout=False)
+            print base_urls.count(), '\n'
+
+        if base_urls:
+            for url in base_urls:
+                res = get_res(url['url'])
+                if res:
+                    if 'Product #' not in res.content:
+                        p = pq(res.text)
+                        url_list = extract_li(p)
+
+                        for item in url_list:
+                            # 保存进mongodb
+                            materials_db_collection[i].insert({'url': item})
+                            # if i > 4:
+                            #     chromatography_db_collection[i].insert({'url': item})
+                            # else:
+                            #     chromatography_db_collection[i].update({'url': item}, {'url': item}, upsert=True)
+                    else:
+                        # 是具体产品页面，保存url进具体产品url表
+                        materials_extract_product_url(i, pq(res.content))
+            conn.close()
+        else:
+            conn.close()
+            break
+
+
+def materials_extract_product_url(i, p):
+    """
+    获取产品列表页的产品url
+    :param p: pyquery对象
+    :return:
+    """
+    tables = p('table.opcTable')
+    for t in tables:
+        trs = pq(t)('tbody').find('tr')
+        for tr in trs:
+            href = pq(tr)('td:first a').attr('href')
+            if href:
+                db.sigma_materials_product_urls.insert({'url': base_url+href})
 
 
 def get_res(url):
