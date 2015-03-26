@@ -191,7 +191,8 @@ def get_chemistry_urls():
     :return:
     """
 
-    for i in range(10):
+    # for i in range(10):
+    for i in range(4, 10):
         if i == 0:
             base_urls = db.sigma_chemistry_urls.find(timeout=False)
         else:
@@ -261,7 +262,8 @@ def get_materials_urls():
     根据基本的url,一步步进入,若不是最终的产品页面,则保存进对应级别的url,否则保存具体产品的url
     :return:
     """
-    for i in range(10):
+    # for i in range(10):
+    for i in range(5, 10):
         if i == 0:
             base_urls = [{
                              'url': 'http://www.sigmaaldrich.com/china-mainland/zh/materials-science/material-science-products.html?TablePage=9540636'
