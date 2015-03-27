@@ -192,7 +192,7 @@ def get_chemistry_urls():
     """
 
     # for i in range(10):
-    for i in range(4, 10):
+    for i in range(5, 10):
         if i == 0:
             base_urls = db.sigma_chemistry_urls.find(timeout=False)
         else:
@@ -263,7 +263,7 @@ def get_materials_urls():
     :return:
     """
     # for i in range(10):
-    for i in range(5, 10):
+    for i in range(6, 10):
         if i == 0:
             base_urls = [{
                              'url': 'http://www.sigmaaldrich.com/china-mainland/zh/materials-science/material-science-products.html?TablePage=9540636'
