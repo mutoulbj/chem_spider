@@ -44,7 +44,8 @@ def get_chromatography_base_urls():
             trs = pq(t)('tbody').find('tr')
             for tr in trs:
                 href = pq(tr)('td a').attr('href')
-                db.sigma_chromatography_urls.insert({'url': base_url+href})
+                d = {'url': base_url+href}
+                db.sigma_chromatography_urls.update(d, d, upsert=True)
 
 
 def get_chromatography_urls():
@@ -71,10 +72,7 @@ def get_chromatography_urls():
 
                         for item in url_list:
                             # 保存进mongodb
-                            if i > 4:
-                                chromatography_db_collection[i].insert({'url': item})
-                            else:
-                                chromatography_db_collection[i].update({'url': item}, {'url': item}, upsert=True)
+                            chromatography_db_collection[i].update({'url': item}, {'url': item}, upsert=True)
                     else:
                         # 是具体产品页面，保存url进具体产品url表
                         chromatography_extract_product_url(i, pq(res.content))
@@ -111,10 +109,8 @@ def chromatography_extract_product_url(i, p):
         for tr in trs:
             href = pq(tr)('td:first a').attr('href')
             if href:
-                if i > 4:
-                    db.sigma_chromatography_product_urls.insert({'url': base_url+href})
-                else:
-                    db.sigma_chromatography_product_urls.update({'url': base_url+href}, {'url': base_url+href}, upsert=True)
+                d = {'url': base_url+href}
+                db.sigma_chromatography_product_urls.update(d, d, upsert=True)
 
 
 def get_product_detail():
@@ -179,10 +175,12 @@ def get_chemistry_base_urls():
                 for li in lis:
                     href = pq(li)('a').attr('href')
                     if href:
-                        db.sigma_chemistry_urls.insert({'url': base_url + href})
+                        d = {'url': base_url + href}
+                        db.sigma_chemistry_urls.update(d, d, upsert=True)
                 more = pq(td)('div.one a').attr('href')
                 if more:
-                    db.sigma_chemistry_urls.insert({'url': base_url + more})
+                    d_1 = {'url': base_url + more}
+                    db.sigma_chemistry_urls.update(d_1, d_1, upsert=True)
 
 
 def get_chemistry_urls():
@@ -209,12 +207,8 @@ def get_chemistry_urls():
 
                         for item in url_list:
                             # 保存进mongodb
-                            # chemistry_db_collection[i].insert({'url': item})
-                            chemistry_db_collection[i].update({'url': item}, {'url': item}, upsert=True)
-                            # if i > 4:
-                            #     chemistry_db_collection[i].insert({'url': item})
-                            # else:
-                            #     chemistry_db_collection[i].update({'url': item}, {'url': item}, upsert=True)
+                            d = {'url': item}
+                            chemistry_db_collection[i].update(d, d, upsert=True)
                     else:
                         # 是具体产品页面，保存url进具体产品url表
                         chemistry_extract_product_url(i, pq(res.content))
@@ -236,12 +230,7 @@ def chemistry_extract_product_url(i, p):
         for tr in trs:
             href = pq(tr)('td:first a').attr('href')
             if href:
-                # db.sigma_chemistry_product_urls.insert({'url': base_url+href})
                 db.sigma_chemistry_product_urls.update({'url': base_url+href}, {'url': base_url+href}, upsert=True)
-                # if i > 4:
-                #     db.sigma_chemistry_product_urls.insert({'url': base_url+href})
-                # else:
-                #     db.sigma_chemistry_product_urls.update({'url': base_url+href}, {'url': base_url+href}, upsert=True)
 
 
 materials_db_collection = {
@@ -282,7 +271,6 @@ def get_materials_urls():
 
                         for item in url_list:
                             # 保存进mongodb
-                            # materials_db_collection[i].insert({'url': item})
                             materials_db_collection[i].update({'url': item}, {'url': item}, upsert=True)
                     else:
                         # 是具体产品页面，保存url进具体产品url表
@@ -305,7 +293,8 @@ def materials_extract_product_url(i, p):
         for tr in trs:
             href = pq(tr)('td:first a').attr('href')
             if href:
-                db.sigma_materials_product_urls.insert({'url': base_url+href})
+                d = {'url': base_url+href}
+                db.sigma_materials_product_urls.update(d, d, upsert=True)
 
 
 def get_res(url):
