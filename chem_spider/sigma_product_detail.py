@@ -137,7 +137,7 @@ class ProductDetail(object):
                     d["desc"] = pq(desc).text().strip()
 
                 # 保存基本信息
-                self.db_detail.update({"number": d["number"]}, {"$set": d}, upsert=True)
+                # self.db_detail.update({"number": d["number"]}, {"$set": d}, upsert=True)
 
                 # 库存与价格
                 p_url = "http://www.sigmaaldrich.com/catalog/PricingAvailability.do?"
@@ -169,7 +169,11 @@ class ProductDetail(object):
                         c = pq(s)
 
                     pro_detail_inner = c("div.product-details-outer div.product-details-inner")
-                    message = pq(pro_detail_inner)("div.product-discontinued").text().strip()
+
+                    message = pq(pro_detail_inner)("div.product-discontinued").text().strip().replace(" ", "")
+                    if not message:
+                        message = pq(pro_detail_inner)("div.priceError").text().strip().replace(" ", "")
+
                     trs = pq(pro_detail_inner)("table").find("tr")[1:]
                     if trs:
                         for tr in trs:
@@ -183,12 +187,15 @@ class ProductDetail(object):
                             d_copy["spec"] = spec
                             d_copy["shipping"] = shipping
                             d_copy["price"] = price
-                            self.db_price.update({"number": d_copy["number"]}, {"$set": d_copy}, upsert=True)
+                            self.db_price.update({"number": d_copy["number"], "spec": d_copy["spec"]},
+                                                 {"$set": d_copy}, upsert=True)
                     if message:
                         d_copy = copy.deepcopy(d_price)
                         d_copy["spec"] = message
-                        self.db_price.update({"number": d_copy["number"]}, {"$set": d_copy}, upsert=True)
-        except:
+                        self.db_price.update({"number": d_copy["number"], "spec": d_copy["spec"]},
+                                             {"$set": d_copy}, upsert=True)
+        except Exception, e:
+            print str(e)
             pass
 
 
