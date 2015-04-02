@@ -137,7 +137,7 @@ class ProductDetail(object):
                     d["desc"] = pq(desc).text().strip()
 
                 # 保存基本信息
-                # self.db_detail.update({"number": d["number"]}, {"$set": d}, upsert=True)
+                self.db_detail.update({"number": d["number"]}, {"$set": d}, upsert=True)
 
                 # 库存与价格
                 p_url = "http://www.sigmaaldrich.com/catalog/PricingAvailability.do?"
