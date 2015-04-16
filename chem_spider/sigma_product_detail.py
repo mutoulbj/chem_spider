@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import time
 import random
-from lxml.etree import XMLSyntaxError
+# from lxml.etree import XMLSyntaxError
 import requests
 import urllib
 import copy
@@ -73,7 +73,7 @@ class ProductDetail(object):
                     d["base_other"] = {}
                     for li in lis:
                         if u"分子式" in pq(li).text():
-                            d["formula"] = pq(li).text().strip().split(" ")[1]
+                            d["formula"] = pq(li).text().strip()
                         elif u"分子量" in pq(li).text():
                             d["weight"] = pq(li).text().strip().split(" ")[-1]
                         elif "MDL" in pq(li).text():
@@ -109,8 +109,17 @@ class ProductDetail(object):
                             d["bp"] = td1
                         elif "mp" in td0:
                             d["mp"] = td1
+                        elif "impurities" in td0:
+                            d["impurities"] = td1
+                        elif "refractive index" in td0:
+                            d["refractive_index"] = td1
+                        elif "expl" in td0:
+                            d["expl_lim"] = td1
                         elif "density" in td0:
-                            d["density"] = td1
+                            if "vapor density" in td0:
+                                d["vapor_density"] = td1
+                            else:
+                                d["density"] = td1
                         else:
                             k = td0.strip().replace(" ", "_").replace('.', '-')
                             d["prop_other"][k] = td1
@@ -118,17 +127,41 @@ class ProductDetail(object):
                 # 安全信息
                 safety = p("div#productDetailSafety table")
                 if safety:
-                    trs = pq(prop).find("tr")[1:]
+                    trs = pq(safety).find("tr")[1:]
                     d["safety_other"] = {}
                     for tr in trs:
                         td0 = pq(pq(tr)("td").eq(0)).text().strip()
                         td1 = pq(pq(tr)("td").eq(1)).text().strip()
                         if u"信号词" in td0:
                             d["sign_word"] = td1  # 信号词
-                        elif u"危险声明" in td0:
+                        elif u"符号" in td0:
+                            d["fh"] = td1
+                        elif u"危害声明" in td0 or u"危险声明" in td0:
                             d["danger_say"] = td1  # 危险声明
+                        elif u"风险声明" in td0 and u"欧洲" in td0:
+                            d["fxsm_oz"] = td1
+                        elif u"警示性声明" in td0:
+                            d["jsxsm"] = td1
+                        elif u"补充危害声明" in td0:
+                            d["bzwhsm"] = td1
+                        elif u"个人防护装备" in td0:
+                            d["grfhzb"] = td1
+                        elif (u"危害码" in td0 or u"危险码" in td0) and u"欧洲" in td0:
+                            d["whm_oz"] = td1
+                        elif u"安全声明" in td0 and u"欧洲" in td0:
+                            d["aqsm_oz"] = td1
+                        elif "RIDADR" in td0:
+                            d["ridadr"] = td1
+                        elif "RETECS" in td0:
+                            d["retecs"] = td1
+                        elif u"WGK德国" in td0:
+                            d["wgk_dg"] = td1
+                        elif u"闪点" in td0 and u"华氏" in td0:
+                            d["sd_hs"] = td1
+                        elif u"闪点" in td0 and u"摄氏" in td0:
+                            d["sd_ss"] = td1
                         else:
-                            k = td0.strip().replace(' ', '_').replace('.', '-')
+                            k = td0.strip().replace(' ', '_').replace('.', '-').replace(u'（', '_').replace(u'）', '_')
                             d["safety_other"][k] = td1
 
                 # 产品描述
@@ -140,60 +173,60 @@ class ProductDetail(object):
                 self.db_detail.update({"number": d["number"]}, {"$set": d}, upsert=True)
 
                 # 库存与价格
-                p_url = "http://www.sigmaaldrich.com/catalog/PricingAvailability.do?"
-                payload = {
-                    "productNumber": d.get("number", ""),
-                    "brandKey": d.get("brand", ""),
-                    "divId": "pricingContainerMessage"
-                }
-                r_url = p_url+urllib.urlencode(payload)
-                r = self.post_res(r_url)
-                if r:
-                    d_price = {
-                        "number": d.get("number", ""),
-                        "cas": d.get("cas", ""),
-                        "name": d.get("name" ""),
-                        "en_name": d.get("en_name", ""),
-                        "pure": d.get("pure", "")
-                    }
-                    s = r.content
-                    try:
-                        index = r.text.index("clearfix")
-                        if s[index+9] == ' ':
-                            l = list(s)
-                            l[index + 9] = ">"
-                            c = pq("".join(l))
-                        else:
-                            c = pq(s)
-                    except ValueError, e:
-                        c = pq(s)
-
-                    pro_detail_inner = c("div.product-details-outer div.product-details-inner")
-
-                    message = pq(pro_detail_inner)("div.product-discontinued").text().strip().replace(" ", "")
-                    if not message:
-                        message = pq(pro_detail_inner)("div.priceError").text().strip().replace(" ", "")
-
-                    trs = pq(pro_detail_inner)("table").find("tr")[1:]
-                    if trs:
-                        for tr in trs:
-                            td_0 = pq(tr)("td").eq(0)
-                            td_1 = pq(tr)("td").eq(1)
-                            td_2 = pq(tr)("td").eq(3)
-                            spec = pq(td_0).text().strip()
-                            shipping = pq(td_1).text().strip()
-                            price = pq(td_2).text().strip()
-                            d_copy = copy.deepcopy(d_price)
-                            d_copy["spec"] = spec
-                            d_copy["shipping"] = shipping
-                            d_copy["price"] = price
-                            self.db_price.update({"number": d_copy["number"], "spec": d_copy["spec"]},
-                                                 {"$set": d_copy}, upsert=True)
-                    if message:
-                        d_copy = copy.deepcopy(d_price)
-                        d_copy["spec"] = message
-                        self.db_price.update({"number": d_copy["number"], "spec": d_copy["spec"]},
-                                             {"$set": d_copy}, upsert=True)
+                # p_url = "http://www.sigmaaldrich.com/catalog/PricingAvailability.do?"
+                # payload = {
+                #     "productNumber": d.get("number", ""),
+                #     "brandKey": d.get("brand", ""),
+                #     "divId": "pricingContainerMessage"
+                # }
+                # r_url = p_url+urllib.urlencode(payload)
+                # r = self.post_res(r_url)
+                # if r:
+                #     d_price = {
+                #         "number": d.get("number", ""),
+                #         "cas": d.get("cas", ""),
+                #         "name": d.get("name" ""),
+                #         "en_name": d.get("en_name", ""),
+                #         "pure": d.get("pure", "")
+                #     }
+                #     s = r.content
+                #     try:
+                #         index = r.text.index("clearfix")
+                #         if s[index+9] == ' ':
+                #             l = list(s)
+                #             l[index + 9] = ">"
+                #             c = pq("".join(l))
+                #         else:
+                #             c = pq(s)
+                #     except ValueError, e:
+                #         c = pq(s)
+                #
+                #     pro_detail_inner = c("div.product-details-outer div.product-details-inner")
+                #
+                #     message = pq(pro_detail_inner)("div.product-discontinued").text().strip().replace(" ", "")
+                #     if not message:
+                #         message = pq(pro_detail_inner)("div.priceError").text().strip().replace(" ", "")
+                #
+                #     trs = pq(pro_detail_inner)("table").find("tr")[1:]
+                #     if trs:
+                #         for tr in trs:
+                #             td_0 = pq(tr)("td").eq(0)
+                #             td_1 = pq(tr)("td").eq(1)
+                #             td_2 = pq(tr)("td").eq(3)
+                #             spec = pq(td_0).text().strip()
+                #             shipping = pq(td_1).text().strip()
+                #             price = pq(td_2).text().strip()
+                #             d_copy = copy.deepcopy(d_price)
+                #             d_copy["spec"] = spec
+                #             d_copy["shipping"] = shipping
+                #             d_copy["price"] = price
+                #             self.db_price.update({"number": d_copy["number"], "spec": d_copy["spec"]},
+                #                                  {"$set": d_copy}, upsert=True)
+                #     if message:
+                #         d_copy = copy.deepcopy(d_price)
+                #         d_copy["spec"] = message
+                #         self.db_price.update({"number": d_copy["number"], "spec": d_copy["spec"]},
+                #                              {"$set": d_copy}, upsert=True)
         except Exception, e:
             print str(e)
             pass
