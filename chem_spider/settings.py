@@ -28,7 +28,7 @@ ALADDIN_BASE_URLS = {
 }
 
 # mongodb
-# mongodb_uri = 'mongodb://localhost:27017'
+mongodb_uri = 'mongodb://localhost:27017'
 mongodb_db_name = 'chem_spider'
 mongodb_user = 'mutoulbj'
 mongodb_passwd = 'fan'
